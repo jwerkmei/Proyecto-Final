@@ -17,6 +17,8 @@ class User(db.Model):
    id = Column(Integer, primary_key=True, autoincrement=True)
    created_at = Column(DateTime, default=datetime.utcnow)
    email = Column(String, nullable=False, unique=True)
+   nombre = Column(String, nullable=False, unique=True)
+   generos_preferidos = Column(String, nullable=False, unique=False)
 
    messages = relationship("Message", back_populates="user")
 

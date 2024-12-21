@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Next Muby (BETA)
+    PelisQuest (BETA)
 {% endblock %}
 
 {% block content %}
+
     <div class="container col-xxl-8 px-4 py-5">
         {% for message in messages %}
             {% if message.author == 'assistant' %}
                 <div class="d-flex flex-row justify-content-start mb-4">
-                    <img class="bg-white" src="{{ url_for('static', filename='muby.png') }}" alt="avatar 1" style="width: 45px; height: 100%;">
+                    <img class="bg-white" src="{{ url_for('static', filename='pelisquest.png') }}" alt="avatar 1" style="width: 45px; height: 100%;">
                     <div class="p-3 ms-3" style="border-radius: 15px; background-color: rgba(57, 192, 237,.2);">
                         <p class="small mb-0">{{message.content}}</p>
                     </div>
@@ -23,19 +24,25 @@
             {% endif %}
         {% endfor %}
 
+
         <form method="POST">
-            <!-- Contenedor para los botones -->
-            <div class="mb-3">
-                <input type="submit" name="intent" value="Recomiendame una película de Cine-Arte" class="btn btn-secondary" />
-                <input type="submit" name="intent" value="Recomiendame una película de Terror" class="btn btn-secondary" />
-                <input type="submit" name="intent" value="Recomiendame una película de Western" class="btn btn-secondary" />
-            </div>
-        
-            <!-- Contenedor para el cuadro de texto y el botón de enviar -->
+            <!-- Ojo que con ENTER se envia el primer submit -->
             <div class="input-group mb-3">
-                <input name="message"  class="form-control" placeholder="Enviar mensaje a Muby" aria-label="Tu mensaje" aria-describedby="send-message"/>
+                <input name="message" id="message" class="form-control" placeholder="Enviar mensaje a PelisQuest" aria-label="Tu mensaje" aria-describedby="send-message" />
                 <button type="submit" class="btn btn-primary" id="send-message" name="intent" value="Enviar">Enviar</button>
             </div>
+            <div class="mb-3">
+                {% if generos_preferidos %}
+                    {% for genero in generos_preferidos.split(",")[:3] %}
+                        <input type="submit" name="intent" value="Recomiendame una película de {{ genero.strip() }}" class="btn btn-secondary" />
+                    {% endfor %}
+                {% else %}
+                    <input type="submit" name="intent" value="Recomiendame una película de ciencia ficción" class="btn btn-secondary" />
+                    <input type="submit" name="intent" value="Recomiendame una película de acción" class="btn btn-secondary" />
+                    <input type="submit" name="intent" value="Recomiendame una película de terror" class="btn btn-secondary" />
+                {% endif %}
+            </div>
+       
         </form>
     </div>
 

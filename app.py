@@ -22,49 +22,54 @@ def index():
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     user = db.session.query(User).first()
-
+    generos_preferidos = user.generos_preferidos or ""
+    
     if request.method == 'GET':
-        return render_template('chat.html', messages=user.messages)
+        return render_template('chat.html', messages=user.messages, generos_preferidos=generos_preferidos)
 
     intent = request.form.get('intent')
 
-    intents = {
-        'Quiero tener suerte': 'Recomiéndame una película',
-        'Recomiendame una película de Cine-Arte': 'Recomiéndame una película de cine arte',
-        'Recomiendame una película de Terror': 'Recomiéndame una película de terror',
-        'Recomiendame una película de Western': 'Recomiéndame un western',
-        'Enviar': request.form.get('message')
-    }
+    user_message = ""
 
-    if intent in intents:
-        user_message = intents[intent]
+    # Si el intent es uno de los géneros preferidos del usuario
+    if intent and intent.startswith("Recomiendame una película de"):
+        genero = intent.split("de")[-1].strip()
+        user_message = f"Recomiéndame una película de {genero}"
 
-        # Guardar nuevo mensaje en la BD
-        db.session.add(Message(content=user_message, author="user", user=user))
-        db.session.commit()
+    # Si el intent es 'Enviar', procesamos el mensaje del usuario
+    elif intent == "Enviar":
+        user_message = request.form.get('message')
 
-        messages_for_llm = [{
-            "role": "system",
-            "content": "Eres un chatbot que recomienda películas, te llamas 'Next Moby'. Tu rol es responder recomendaciones de manera breve y concisa. No repitas recomendaciones.",
-        }]
+    else:
+        user_message = "No entiendo esa solicitud."
 
-        for message in user.messages:
-            messages_for_llm.append({
-                "role": message.author,
-                "content": message.content,
-            })
+    # Guardar nuevo mensaje en la BD
+    db.session.add(Message(content=user_message, author="user", user=user))
+    db.session.commit()
 
-        chat_completion = client.chat.completions.create(
-            messages=messages_for_llm,
-            model="gpt-4o",
-            temperature=1
-        )
+    messages_for_llm = [{
+        "role": "system",
+        "content": "Eres un chatbot que recomienda películas, te llamas 'Next Moby'. Tu rol es responder recomendaciones de manera breve y concisa. No repitas recomendaciones.",
+    }]
 
-        model_recommendation = chat_completion.choices[0].message.content
-        db.session.add(Message(content=model_recommendation, author="assistant", user=user))
-        db.session.commit()
+    for message in user.messages:
+        messages_for_llm.append({
+            "role": message.author,
+            "content": message.content,
+        })
 
-        return render_template('chat.html', messages=user.messages)
+    chat_completion = client.chat.completions.create(
+        messages=messages_for_llm,
+        model="gpt-4o",
+        temperature=1
+    )
+
+    model_recommendation = chat_completion.choices[0].message.content
+    db.session.add(Message(content=model_recommendation, author="assistant", user=user))
+    db.session.commit()
+
+    return render_template('chat.html', messages=user.messages, generos_preferidos=generos_preferidos)
+
 
 
 @app.route('/user/<username>')
