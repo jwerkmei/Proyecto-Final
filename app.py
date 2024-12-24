@@ -121,15 +121,15 @@ def update_user(id):
     
     if request.method == 'POST':
         if user:
-            # Actualizar los campos con los datos enviados desde el formulario
+            # Se actualizan los campos con los datos enviados desde el formulario
             user.nombre = request.form['nombre']
             user.email = request.form['email']
             user.generos_preferidos = request.form['generos_preferidos'].lower()
             
-            # Guardar cambios en la base de datos
+            # Guardan los cambios en la base de datos
             db.session.commit()
             
-            # Redirigir de nuevo a la misma página con un mensaje de éxito como parámetro en la URL
+            # Se redirige de nuevo a la misma página con un mensaje de éxito como parámetro en la URL
             return redirect(url_for('update_user', id=id, success='Información del usuario fue actualizada'))
         
         else:
