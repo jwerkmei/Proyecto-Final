@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_bootstrap import Bootstrap5
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -23,7 +23,7 @@ def index():
 def chat():
     user = db.session.query(User).first()
     generos_preferidos = user.generos_preferidos or ""
-    
+
     if request.method == 'GET':
         return render_template('chat.html', messages=user.messages, generos_preferidos=generos_preferidos)
 
@@ -49,7 +49,7 @@ def chat():
 
     messages_for_llm = [{
         "role": "system",
-        "content": "Eres un chatbot que recomienda películas, te llamas 'Next Moby'. Tu rol es responder recomendaciones de manera breve y concisa. No repitas recomendaciones.",
+        "content": f"Eres un chatbot que recomienda películas, te llamas 'Next Moby'. Tu rol es responder recomendaciones de manera breve y concisa. No repitas recomendaciones. Debes recordar el nombre del usuario ({user.nombre}) y sus géneros preferidos ({user.generos_preferidos}) todo el tiempo.",
     }]
 
     for message in user.messages:
@@ -113,3 +113,27 @@ def recommend():
         'recommendation': message,
         'tokens': chat_completion.usage.total_tokens,
     }
+
+
+@app.route('/user/update/<int:id>', methods=['GET', 'POST'])
+def update_user(id):
+    user = db.session.query(User).get(id)
+    
+    if request.method == 'POST':
+        if user:
+            # Actualizar los campos con los datos enviados desde el formulario
+            user.nombre = request.form['nombre']
+            user.email = request.form['email']
+            user.generos_preferidos = request.form['generos_preferidos'].lower()
+            
+            # Guardar cambios en la base de datos
+            db.session.commit()
+            
+            # Redirigir de nuevo a la misma página con un mensaje de éxito como parámetro en la URL
+            return redirect(url_for('update_user', id=id, success='Información del usuario fue actualizada'))
+        
+        else:
+            return redirect(url_for('update_user', id=id, error='Usuario no encontrado'))
+
+    # Si es GET, mostramos el formulario con los datos del usuario
+    return render_template('update_user.html', user=user)
